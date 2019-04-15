@@ -1,5 +1,5 @@
 " remap a key given a dictionary representing a saved mapping
-function! quick_scope#mapping#Restore(mapping) abort
+function! sneak_quick_scope#mapping#Restore(mapping) abort
   execute a:mapping.mode
         \ . (a:mapping.noremap ? 'noremap ' : 'map ')
         \ . (a:mapping.buffer ? '<buffer> ' : '')
