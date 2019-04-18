@@ -109,8 +109,8 @@ function! s:set_highlight_colors()
   let g:sqs_hi_group_cursor = 'SneakQuickScopeCursor'
 
   execute 'highlight default link ' . g:sqs_hi_group_cursor . ' Cursor'
-  execute 'highlight default link ' . g:qs_hi_group_primary . ' Function'
-  execute 'highlight default link ' . g:qs_hi_group_secondary . ' Define'
+  execute 'highlight default link ' . g:sqs_hi_group_primary . ' Function'
+  execute 'highlight default link ' . g:sqs_hi_group_secondary . ' Define'
 endfunction
 
 call s:set_highlight_colors()

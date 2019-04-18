@@ -16,19 +16,19 @@ function! sneak_quick_scope#HighlightView(direction, targets) abort
   if g:sqs_enable && (!exists('b:sqs_local_disable') || !b:sqs_local_disable)
     let topline = line("w0")
     let botline = line("w$")
-    let line_num = line("w$")
+    let line_num = line(".")
     let pos = col('.')
 
     " Highlight after the cursor.
     if a:direction != 0
-      let [patt_p, patt_s] = s:get_highlight_patterns(line_num, topline, pos, 1,
+      let [patt_p, patt_s] = s:get_highlight_patterns(line_num, botline, pos, 1,
             \ a:targets)
       call s:apply_highlight_patterns([patt_p, patt_s])
     endif
 
     " Highlight before the cursor.
     if a:direction != 1
-      let [patt_p, patt_s] = s:get_highlight_patterns(line_num, botline, pos, 0,
+      let [patt_p, patt_s] = s:get_highlight_patterns(line_num, topline, pos, 0,
             \ a:targets)
       call s:apply_highlight_patterns([patt_p, patt_s])
     endif
@@ -162,12 +162,14 @@ function! s:apply_highlight_patterns(patterns) abort
   if !empty(patt_p)
     " Highlight columns corresponding to matched characters.
     " Ignore the leading | in the primary highlights string.
-    call matchadd(g:sqs_hi_group_primary, '\v%' . patt_p[1:], 
+    call matchadd(g:sqs_hi_group_primary, '\v' . patt_p[1:], 
           \ g:sqs_hi_priority)
+    " echom "patt_p" . patt_p
   endif
   if !empty(patt_s)
-    call matchadd(g:sqs_hi_group_secondary, '\v%' . patt_s[1:], 
+    call matchadd(g:sqs_hi_group_secondary, '\v' . patt_s[1:], 
           \ g:sqs_hi_priority)
+    " echom "patt_s" . patt_s
   endif
 endfunction
 
@@ -185,16 +187,20 @@ function! s:save_chars_with_secondary_highlights(chars) abort
 endfunction
 
 " Set or append to the pattern strings for the highlights.
-function! s:add_to_highlight_patterns(patterns, highlights) abort
+function! s:add_to_highlight_patterns(patterns, highlights, line_num) abort
   let [patt_p, patt_s] = a:patterns
   let [hi_p, hi_s] = a:highlights
+
+  " echom 'add_to_highlight_patterns hi_p: ' . hi_p . ' hi_s: ' . hi_s
 
   " If there is a primary highlight for the last word, add it to the primary
   " highlight pattern.
   if hi_p > 0
-    let patt_p = printf('%s|%%%sc', patt_p, hi_p)
+    " echom "assigning to patt_p"
+    let patt_p = printf('%s|%%%sl%%%sc', patt_p, a:line_num, hi_p)
   elseif hi_s > 0
-    let patt_s = printf('%s|%%%sc', patt_s, hi_s)
+    " echom "assigning to patt_s"
+    let patt_s = printf('%s|%%%sl%%%sc', patt_s, a:line_num, hi_s)
   endif
 
   return [patt_p, patt_s]
@@ -204,6 +210,10 @@ endfunction
 " pattern string.
 function! s:get_highlight_patterns(line_num, end_line_num, cursor, direction, 
       \ targets) abort
+
+  " echom "get_highlight_patterns line num: " . a:line_num . " end line_num: " .
+  "       \ a:end_line_num . " cursor: " . a:cursor . " direction: " . 
+  "       \ a:direction
   " Keeps track of the number of occurrences for each target
   let occurrences = {}
 
@@ -214,6 +224,8 @@ function! s:get_highlight_patterns(line_num, end_line_num, cursor, direction,
   " Indicates whether this is the first word under the cursor. We don't want
   " to highlight any characters in it.
   let is_first_word = 1
+
+   " 𠜎 𠜱 𠝹 𠱓 𠱸 𠲖 𠳏 𠳕 𠴕 𠵼 𠵿 𠸎 𠸏 𠹷 𠺝 𠺢 𠻗 𠻹 𠻺 𠼭 𠼮 𠽌 𠾴 𠾼 𠿪 𡁜 𡁯 𡁵 𡁶 𡁻 𡃁 𡃉 𡇙 𢃇 𢞵 𢫕 𢭃 𢯊 𢱑 𢱕 𢳂 𢴈 𢵌 𢵧 𢺳 𣲷 𤓓 𤶸 𤷪 𥄫 𦉘 𦟌 𦧲 𦧺 𧨾 𨅝 𨈇 𨋢 𨳊 𨳍 𨳒 𩶘
 
   " We want to skip the first char as this is the char the cursor is at
   let is_first_char = 1
@@ -231,6 +243,7 @@ function! s:get_highlight_patterns(line_num, end_line_num, cursor, direction,
   " line; otherwise, we're looping from the cursor to the beginning of the line.
   
   let line = getline(a:line_num)
+  let line_len = strlen(line)
 
   " find the character index i and the byte index c
   " of the current cursor position
@@ -251,117 +264,140 @@ function! s:get_highlight_patterns(line_num, end_line_num, cursor, direction,
   let c_start  = c
   let l  = a:line_num
     
+
+  let total_iter = 0
+
   let char = matchstr(line, '.', byteidx(line, i))
 
   " catch cases where multibyte chars may result in c not exactly equal to
-  " a:end
-  while((a:direction && l <= a:endline || !a:direction && l >= a:endline) && 
+  " line_end
+  while((a:direction && l <= a:end_line_num || !a:direction && l >= a:end_line_num) && 
         \ abs(l - a:line_num) <= g:sqs_within_lines && 
         \ abs(c - c_start) <= g:sqs_within_chars)
+
+    " echom "line: " . string(l)
+
     if exists('last_char')
       unlet last_char
     endif
   
-    while ((a:direction && c <= a:end || !a:direction && c >= a:end) &&
-          \ abs(c - c_start) <= g:sqs_within_chars)
+    if a:direction == 1
+      let line_end = line_len
+    else
+      let line_end = -1
+    endif
 
-      let char = matchstr(line, '.', byteidx(line, i))
+    if !empty(line)
+      while ((a:direction && c <= line_end || !a:direction && c >= line_end) &&
+            \ abs(c - c_start) <= g:sqs_within_chars)
 
-      " Skips the first char as it is the char the cursor is at
-      if is_first_char
-
-        let is_first_char = 0
+        let total_iter += 1
 
 
-      " Don't consider the character for highlighting, but mark the position
-      " as the start of a new word.
-      " use '\k' to check agains keyword characters (see :help 'iskeyword' and
-      " :help /\k)
-      else
-        if exists('last_char')
-          if char !~# '\k' || empty(char)
-            if !is_first_word && (l != l || g:sqs_highlight_current_line)
-              let [patt_p, patt_s] = s:add_to_highlight_patterns([patt_p, patt_s],
-                    \ [hi_p, hi_s])
-            endif
+        let char = matchstr(line, '.', byteidx(line, i))
+        " echom "c: " . string(c) . " char: " . char
 
-            " We've reached a new word, so reset any highlights.
-            let [hi_p, hi_s] = [0, 0]
-            let [char_p, char_s] = ['', '']
+        " Skips the first char as it is the char the cursor is at
+        if is_first_char
 
-            let is_first_word = 0
-          elseif index(a:targets, char) != -1 && 
-                \ index(a:targets, last_char) != -1
-            if has_key(occurrences, char)
-              let occurrences[char] += 1
-            else
-              let occurrences[char] = 1
-            endif
+          let is_first_char = 0
 
-            if !is_first_word
-              let char_pair_occurances = get(occurrences, char . last_char)
-
-              " If the search is forward, we want to be greedy; otherwise, we
-              " want to be reluctant. This prioritizes highlighting for
-              " characters at the beginning of a word.
-              "
-              " If this is the first occurrence of the letter in the word,
-              " mark it for a highlight.
-              " If we are looking backwards, c will point to the end of the
-              " end of composing bytes so we adjust accordingly
-              " eg. with a multibyte char of length 3, c will point to the
-              " 3rd byte. Minus (len(char) - 1) to adjust to 1st byte
-              if char_pair_occurances == 1 && ((a:direction == 1 && hi_p == 0) ||
-                    \ a:direction == 0)
-                let hi_p = c - (1 - a:direction) * (len(last_char) + 
-                      \ len(char) - 1)
-                if direction
-                  let char_s = last_char . char
-                else
-                  let char_s = char . last_char
-                endif
-              elseif char_pair_occurances == 2 && ((a:direction == 1 && hi_s == 0) ||
-                    \ a:direction == 0)
-                let hi_s = c - (1 - a:direction) * (len(last_char) + 
-                      \ len(char)- 1)
-                if direction
-                  let char_s = last_char . char
-                else
-                  let char_s = char . last_char
-                endif
+         " Don't consider the character for highlighting, but mark the position
+         " as the start of a new word.
+         " use '\k' to check agains keyword characters (see :help 'iskeyword' and
+         " :help /\k)
+        else
+          if exists('last_char')
+            if char !~# '\k' || empty(char)
+              " echom "char is break"
+              " echom "line is : " . l . " cursor line is: " . a:line_num
+              if !is_first_word && (l != a:line_num || g:sqs_highlight_current_line)
+                " echom "adding inside char loop"
+                let [patt_p, patt_s] = s:add_to_highlight_patterns([patt_p, patt_s],
+                      \ [hi_p, hi_s], l)
               endif
+
+              " We've reached a new word, so reset any highlights.
+              let [hi_p, hi_s] = [0, 0]
+              let [char_p, char_s] = ['', '']
+
+              let is_first_word = 0
+            elseif index(a:targets, char) != -1 && 
+                  \ index(a:targets, last_char) != -1
+
+
+             if a:direction
+               let concat = char . last_char
+             else
+               let concat = last_char . char
+             endif
+
+             if has_key(occurrences, concat)
+               let occurrences[concat] += 1
+             else
+               let occurrences[concat] = 1
+             endif
+
+             let char_pair_occurances = get(occurrences, concat)
+             if !is_first_word
+
+               " If the search is forward, we want to be greedy; otherwise, we
+               " want to be reluctant. This prioritizes highlighting for
+               " characters at the beginning of a word.
+               "
+               " If this is the first occurrence of the letter in the word,
+               " mark it for a highlight.
+               " If we are looking backwards, c will point to the end of the
+               " end of composing bytes so we adjust accordingly
+               " eg. with a multibyte char of length 3, c will point to the
+               " 3rd byte. Minus (len(char) - 1) to adjust to 1st byte
+               if char_pair_occurances == 1 && ((a:direction == 1 && hi_p == 0) ||
+                     \ a:direction == 0)
+                 let hi_p = c - (1 - a:direction) * (len(last_char) + 
+                       \ len(char) - 1)
+                 let char_p = concat
+               elseif char_pair_occurances == 2 && ((a:direction == 1 && hi_s == 0) ||
+                     \ a:direction == 0)
+                 let hi_s = c - (1 - a:direction) * (len(last_char) + 
+                       \ len(char)- 1)
+                 let char_s = concat
+               endif
+             endif
             endif
           endif
+         let last_char = char
         endif
-        let last_char = char
-      endif
 
-      " update i to next character
-      " update c to next byteindex
-      if a:direction == 1
-        let i += 1
-        let c += strlen(char)
-      else
-        let i -= 1
-        let c -= strlen(char)
-      endif
-    endwhile
+        " update i to next character
+        " update c to next byteindex
+        if a:direction == 1
+          let i += 1
+          let c += max([strlen(char), 1])
+        else
+          let i -= 1
+          let c -= max([strlen(char), 1])
+        endif
+      endwhile
+    endif
 
     let l += a:direction == 1 ? 1 : -1
     let line = getline(l)
+    let line_len = strlen(line)
     if a:direction == 1
       let c = 0
       let i = 0
-      let end = strlen(line)
+      let line_end = line_len
     else
-      let i = strlen(line) - 1
+      let i = line_len - 1
       let c = col([l, '$'])
-      let end = -1
+      let line_end = -1
     endif
   endwhile
 
+  echom "total_iter: " . total_iter
+
   let [patt_p, patt_s] = s:add_to_highlight_patterns([patt_p, patt_s],
-        \ [hi_p, hi_s])
+        \ [hi_p, hi_s], l)
 
   "TODO
   " if exists('g:sqs_highlight_on_keys')
