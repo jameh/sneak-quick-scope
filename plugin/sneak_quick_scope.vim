@@ -36,19 +36,33 @@ if !exists('g:sqs_highlight_current_line')
   let g:sqs_highlight_current_line = 0
 endif
 
+let g:sqs_last_time = reltime()
+
+if !exists('g:sqs_highlight_current_line')
+  let g:sqs_highlight_current_line = 0
+endif
+
+if !exists('g:sqs_minimum_time')
+  let g:sqs_minimum_time = 0.0
+endif
+
 if !exists('g:sqs_lazy_highlight')
-  let g:sqs_lazy_highlight = 0
+  let g:sqs_lazy_highlight = 1
 endif
 
-if !exists('g:sqs_within_chars')
-  " Disable outside this many chars from the cursor
-  let g:sqs_within_chars = 1000
+if !exists('g:sqs_blacklists_filetypes')
+  let g:sqs_blacklists_filetypes = ['startify', 'gitcommit', 'help']
 endif
 
-if !exists('g:sqs_within_lines')
-  " Disable outside this many lines from the cursor
-  let g:sqs_within_lines = 100
-endif
+" if !exists('g:sqs_within_chars')
+"   " Disable outside this many chars from the cursor
+"   let g:sqs_within_chars = 1000
+" endif
+
+" if !exists('g:sqs_within_lines')
+"   " Disable outside this many lines from the cursor
+"   let g:sqs_within_lines = 100
+" endif
 
 if !exists('g:sqs_accepted_chars')
   let g:sqs_accepted_chars = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
@@ -58,32 +72,19 @@ if !exists('g:sqs_accepted_chars')
         \ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 endif
 
-if !exists('g:sqs_highlight_on_keys')
-  " Vanilla mode. Highlight on cursor movement.
-  augroup sneak_quick_scope
-    if g:sqs_lazy_highlight
-      autocmd CursorHold,InsertLeave,ColorScheme,WinEnter,BufEnter,FocusGained
-            \ * call sneak_quick_scope#UnhighlightView() | 
-            \ call sneak_quick_scope#HighlightView(2, g:sqs_accepted_chars)
-    else
-      autocmd CursorMoved,InsertLeave,ColorScheme,WinEnter,BufEnter,FocusGained
-            \ * call sneak_quick_scope#UnhighlightView() | 
-            \ call sneak_quick_scope#HighlightView(2, g:sqs_accepted_chars)
-    endif
-    autocmd InsertEnter,BufLeave,TabLeave,WinLeave,FocusLost
-          \ * call sneak_quick_scope#UnhighlightView()
-  augroup END
-else
-  " Highlight on key press. Set an 'augmented' mapping for each defined key.
-  for motion in filter(g:sqs_highlight_on_keys, "v:val =~# '^[sS]$'")
-    for mapmode in ['nnoremap', 'onoremap', 'xnoremap']
-      execute printf(mapmode . ' <unique> <silent> <expr> %s '.
-            \ 'sneak_quick_scope#Ready() . sneak_quick_scope#Aim("%s") . '.
-            \ 'sneak_quick_scope#Reload() . sneak_quick_scope#DoubleTap()', 
-            \ motion, motion)
-    endfor
-  endfor
-endif
+augroup sneak_quick_scope
+  if g:sqs_lazy_highlight
+    autocmd CursorHold,InsertLeave,ColorScheme,WinEnter,BufEnter,FocusGained
+          \ * call sneak_quick_scope#UnhighlightView() | 
+          \ call sneak_quick_scope#HighlightView(2, g:sqs_accepted_chars)
+  else
+    autocmd CursorHold,CursorMoved,InsertLeave,ColorScheme,WinEnter,BufEnter,FocusGained
+          \ * call sneak_quick_scope#UnhighlightView() | 
+          \ call sneak_quick_scope#HighlightView(2, g:sqs_accepted_chars)
+  endif
+  autocmd InsertEnter,BufLeave,TabLeave,WinLeave,FocusLost
+        \ * call sneak_quick_scope#UnhighlightView()
+augroup END
 
 " User commands --------------------------------------------------------------
 command! -nargs=0 SneakQuickScopeToggle call sneak_quick_scope#Toggle()
