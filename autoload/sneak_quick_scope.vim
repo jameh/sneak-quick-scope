@@ -10,8 +10,9 @@ function! sneak_quick_scope#Toggle() abort
   endif
 endfunction
 
-function! sneak_quick_scope#HighlightView(direction, targets) abort
-  if g:sqs_enable && reltimefloat(reltime(g:sqs_last_time)) > g:sqs_minimum_time && index(g:sqs_blacklists_filetypes, &filetype) == -1
+function! sneak_quick_scope#HighlightView() abort
+  if g:sqs_enable && reltimefloat(reltime(g:sqs_last_time)) > g:sqs_minimum_time
+        \ && index(g:sqs_blacklisted_filetypes, &filetype) == -1
     let g:sqs_last_time = reltime()
     let topline = line("w0")
     let botline = line("w$")

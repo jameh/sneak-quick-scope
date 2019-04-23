@@ -29,18 +29,15 @@ augroup END
 
 " Options --------------------------------------------------------------------
 if !exists('g:sqs_enable')
-  let g:sqs_enable = 1
+  let g:sqs_enable = 0
 endif
 
-if !exists('g:sqs_highlight_current_line')
-  let g:sqs_highlight_current_line = 0
-endif
+"TODO hardcoded for now
+" if !exists('g:sqs_highlight_current_line')
+"   let g:sqs_highlight_current_line = 0
+" endif
 
 let g:sqs_last_time = reltime()
-
-if !exists('g:sqs_highlight_current_line')
-  let g:sqs_highlight_current_line = 0
-endif
 
 if !exists('g:sqs_minimum_time')
   let g:sqs_minimum_time = 0.0
@@ -50,10 +47,12 @@ if !exists('g:sqs_lazy_highlight')
   let g:sqs_lazy_highlight = 1
 endif
 
-if !exists('g:sqs_blacklists_filetypes')
-  let g:sqs_blacklists_filetypes = ['startify', 'gitcommit', 'help']
+if !exists('g:sqs_blacklisted_filetypes')
+  let g:sqs_blacklisted_filetypes = ['startify', 'gitcommit', 'help', '',
+        \ 'calendar']
 endif
 
+"TODO hardcoded for now
 " if !exists('g:sqs_within_chars')
 "   " Disable outside this many chars from the cursor
 "   let g:sqs_within_chars = 1000
@@ -64,23 +63,24 @@ endif
 "   let g:sqs_within_lines = 100
 " endif
 
-if !exists('g:sqs_accepted_chars')
-  let g:sqs_accepted_chars = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
-        \ 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x',
-        \ 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L',
-        \ 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 
-        \ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-endif
+"TODO hardcoded for now
+" if !exists('g:sqs_accepted_chars')
+"   let g:sqs_accepted_chars = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+"         \ 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x',
+"         \ 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L',
+"         \ 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 
+"         \ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+" endif
 
 augroup sneak_quick_scope
   if g:sqs_lazy_highlight
     autocmd CursorHold,InsertLeave,ColorScheme,WinEnter,BufEnter,FocusGained
           \ * call sneak_quick_scope#UnhighlightView() | 
-          \ call sneak_quick_scope#HighlightView(2, g:sqs_accepted_chars)
+          \ call sneak_quick_scope#HighlightView()
   else
     autocmd CursorHold,CursorMoved,InsertLeave,ColorScheme,WinEnter,BufEnter,FocusGained
           \ * call sneak_quick_scope#UnhighlightView() | 
-          \ call sneak_quick_scope#HighlightView(2, g:sqs_accepted_chars)
+          \ call sneak_quick_scope#HighlightView()
   endif
   autocmd InsertEnter,BufLeave,TabLeave,WinLeave,FocusLost
         \ * call sneak_quick_scope#UnhighlightView()
