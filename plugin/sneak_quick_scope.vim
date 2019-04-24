@@ -48,7 +48,7 @@ if !exists('g:sqs_lazy_highlight')
 endif
 
 if !exists('g:sqs_blacklisted_filetypes')
-  let g:sqs_blacklisted_filetypes = ['startify', 'gitcommit', 'help',
+  let g:sqs_blacklisted_filetypes = ['startify', 'gitcommit', 'help', '',
         \ 'calendar']
 endif
 
