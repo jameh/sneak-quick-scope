@@ -49,7 +49,7 @@ endif
 
 if !exists('g:sqs_blacklisted_filetypes')
   let g:sqs_blacklisted_filetypes = ['startify', 'gitcommit', 'help', '',
-        \ 'calendar']
+        \ 'calendar', 'gitmessengerpopup']
 endif
 
 "TODO hardcoded for now
