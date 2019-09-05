@@ -38,7 +38,6 @@ function! sneak_quick_scope#HighlightView() abort
       endif
     else
       echoerr "Highlight failed"
-      echom string(patterns)
     endif
   endif
 endfunction

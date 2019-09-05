@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 
+#include <unistd.h>
+
 typedef char32_t ch_t;
 typedef std::pair<ch_t, ch_t> ch_pair;
 typedef std::wstring_convert<std::codecvt_utf8<ch_t>, ch_t> converter;
@@ -113,13 +115,23 @@ int main(int argc, char *argv[]) {
     lines.push_back(conv.from_bytes(line));
   }
 
-
   size_t c = 1;
   size_t col_idx = 0;
-  while (c < col_num) {
-    auto &ch = lines[line_num][col_idx];
-    c += conv.to_bytes(ch).size();
-    col_idx++;
+
+  if (lines.empty()) {
+    return 0;
+  } else if (line_num >= lines.size()) {
+    line_num = lines.size() - 1;
+    col_idx = lines[line_num].size() - 1;
+    for (auto &ch : lines[line_num]) {
+      c += conv.to_bytes(ch).size();
+    }
+  } else {
+    while (c < col_num) {
+      auto &ch = lines[line_num][col_idx];
+      c += conv.to_bytes(ch).size();
+      col_idx++;
+    }
   }
 
   bool disable_on_line = true;
